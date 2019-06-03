@@ -2,8 +2,11 @@ package com.example.pokdex.UI;
 
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -18,7 +21,11 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.example.pokdex.Model.PokemonDetail;
 import com.example.pokdex.Model.PokemonSpecies;
+import com.example.pokdex.Model.MyPokemon;
 import com.example.pokdex.R;
+
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class DetailActivity extends AppCompatActivity {
 
@@ -41,8 +48,11 @@ public class DetailActivity extends AppCompatActivity {
     private ImageView pokeFrontImage;
     private ImageView pokeBackImage;
     private String pokemonName;
+    private FloatingActionButton addPokemon;
     private PokemonDetail pokemonDetail = new PokemonDetail();
     private PokemonSpecies pokemonSpecie = new PokemonSpecies();
+    private Executor executor = Executors.newSingleThreadExecutor();
+    private MyPokemonViewModel myPokemonViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +88,8 @@ public class DetailActivity extends AppCompatActivity {
         type2 = findViewById(R.id.type2);
         description = findViewById(R.id.description);
         color = findViewById(R.id.color);
+        addPokemon = findViewById(R.id.addPokemon);
+        myPokemonViewModel = ViewModelProviders.of(this).get(MyPokemonViewModel.class);
         if (getIntent().hasExtra("name")){
             pokemonName = getIntent().getStringExtra("name");
         }
@@ -109,8 +121,8 @@ public class DetailActivity extends AppCompatActivity {
                         .transition(new DrawableTransitionOptions().crossFade())
                         .diskCacheStrategy(DiskCacheStrategy.ALL)
                         .into(pokeBackImage);
-                height.setText(String.valueOf(pokemonDetail.getHeight() + " DM"));
-                weight.setText(String.valueOf(pokemonDetail.getWeight() + " HG"));
+                height.setText(String.valueOf(pokemonDetail.getHeight() + " M"));
+                weight.setText(String.valueOf(pokemonDetail.getWeight() + " KG"));
                 hp.setText(String.valueOf(pokemonDetail.getStats().get(5).getBaseStat()));
                 attack.setText(String.valueOf(pokemonDetail.getStats().get(4).getBaseStat()));
                 defence.setText(String.valueOf(pokemonDetail.getStats().get(3).getBaseStat()));
@@ -140,10 +152,71 @@ public class DetailActivity extends AppCompatActivity {
                 color.setText(pokemonSpecie.getColor().getName());
             }
         });
+        addPokemon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AlertDialog.Builder alert = new AlertDialog.Builder(DetailActivity.this, R.style.MyDialogTheme);
+                alert.setTitle(R.string.app_name)
+                        .setMessage("Do you want to add " + pokemonDetail.getName().toUpperCase() + " to your Pokédex?")
+                        .setCancelable(false)
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                int id = pokemonDetail.getID();
+                                String name = pokemonDetail.getName();
+                                String frontImage = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/" + pokemonDetail.getID() + ".png";
+                                String backImage = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/" + pokemonDetail.getID() + ".png";
+                                double height = pokemonDetail.getHeight();
+                                double weight = pokemonDetail.getWeight();
+                                int hp = pokemonDetail.getStats().get(5).getBaseStat();
+                                int attack = pokemonDetail.getStats().get(4).getBaseStat();
+                                int defence = pokemonDetail.getStats().get(3).getBaseStat();
+                                int speed = pokemonDetail.getStats().get(0).getBaseStat();
+                                int specialAttack = pokemonDetail.getStats().get(2).getBaseStat();
+                                int specialDefence = pokemonDetail.getStats().get(1).getBaseStat();
+                                String type1;
+                                String type2;
+                                if (pokemonDetail.getTypes().size() > 1){
+                                    type1 = pokemonDetail.getTypes().get(0).getType().getName();
+                                    type2 = pokemonDetail.getTypes().get(1).getType().getName();
+                                } else {
+                                    type1 = pokemonDetail.getTypes().get(0).getType().getName();
+                                    type2 = null;
+                                }
+                                String color = pokemonSpecie.getColor().getName();
+                                String description = null;
+                                if (pokemonSpecie.getFlavorTextEntries().size() < 60){
+                                    description = pokemonSpecie.getFlavorTextEntries().get(1).getFlavorText();
+                                } else if (pokemonSpecie.getFlavorTextEntries().size() > 60){
+                                    description = pokemonSpecie.getFlavorTextEntries().get(2).getFlavorText();
+                                }
+                                final MyPokemon pokemon = new MyPokemon(id, name, frontImage, backImage, height, weight, hp, attack, defence, speed, specialAttack, specialDefence, type1, type2, color, description);
+                                insertPokemon(pokemon);
+                                showToast(name.toUpperCase() + " is added to your Pokédex.");
+                            }
+                        })
+                        .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.cancel();
+                            }
+                        })
+                        .create().show();
+            }
+        });
+    }
+
+    private void insertPokemon(final MyPokemon pokemon){
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                myPokemonViewModel.insert(pokemon);
+            }
+        });
     }
 
     private void showToast(String message) {
-        Toast.makeText(DetailActivity.this, message, Toast.LENGTH_LONG).show();
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
     }
 
     @Override

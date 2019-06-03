@@ -31,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private BottomNavigationView bottomNavigationView;
     private List<Pokemon> pokemonList = new ArrayList<>();
     private List<Pokemon> sortedList = new ArrayList<>();
+    private List<Pokemon> filteredList = new ArrayList<>();
     private PokedexAdapter pokedexAdapter;
     private MainActivityViewModel viewModel;
     private int limit;
@@ -127,7 +128,13 @@ public class MainActivity extends AppCompatActivity {
     private void filter(String query) {
         List<Pokemon> filteredPokemon = new ArrayList<>();
 
-        for (Pokemon pokemon : sortedList){
+        if (pokemonList.size() < 150){
+            filteredList = pokemonList;
+        } else {
+            filteredList = sortedList;
+        }
+
+        for (Pokemon pokemon : filteredList){
             if (pokemon.getName().toLowerCase().contains(query.toLowerCase())){
                 filteredPokemon.add(pokemon);
             }
@@ -150,28 +157,28 @@ public class MainActivity extends AppCompatActivity {
                     viewModel.getPokemons(viewModel.count);
                 } else{
                     switch (position) {
-                        case 0: sortedList = pokemonList;
+                        default: case 0: sortedList = pokemonList;
                             pokedexAdapter.filteredPokemon(pokemonList);
                             break;
-                        case 1: sortedList = pokemonList.subList(0, 150);
+                        case 1: sortedList = pokemonList.subList(0, 151);
                             pokedexAdapter.filteredPokemon(sortedList);
                             break;
-                        case 2: sortedList = pokemonList.subList(151, 250);
+                        case 2: sortedList = pokemonList.subList(151, 251);
                             pokedexAdapter.filteredPokemon(sortedList);
                             break;
-                        case 3: sortedList = pokemonList.subList(251, 385);
+                        case 3: sortedList = pokemonList.subList(251, 386);
                             pokedexAdapter.filteredPokemon(sortedList);
                             break;
-                        case 4: sortedList = pokemonList.subList(386, 492);
+                        case 4: sortedList = pokemonList.subList(386, 493);
                             pokedexAdapter.filteredPokemon(sortedList);
                             break;
-                        case 5: sortedList = pokemonList.subList(493, 648);
+                        case 5: sortedList = pokemonList.subList(493, 649);
                             pokedexAdapter.filteredPokemon(sortedList);
                             break;
-                        case 6: sortedList = pokemonList.subList(649, 720);
+                        case 6: sortedList = pokemonList.subList(649, 721);
                             pokedexAdapter.filteredPokemon(sortedList);
                             break;
-                        case 7: sortedList = pokemonList.subList(721, 806);
+                        case 7: sortedList = pokemonList.subList(721, 807);
                             pokedexAdapter.filteredPokemon(sortedList);
                             break;
                         case 8: sortedList = pokemonList.subList(807, pokemonList.size());

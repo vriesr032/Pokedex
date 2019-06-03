@@ -35,4 +35,5 @@
         <item>Other</item>
     </string-array>
     <string name="myPokemon">My Pokemon</string>
+    <string name="action_delete">Delete Pokédex</string>
 </resources>
