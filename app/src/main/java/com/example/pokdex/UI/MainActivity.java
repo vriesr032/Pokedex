@@ -49,8 +49,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
                 if (menuItem.getItemId() == R.id.action_MyPokemon){
-                    Intent intent = new Intent(MainActivity.this, MyPokemon.class);
-                    startActivity(intent);
+                        Intent intent = new Intent(MainActivity.this, MyPokemon.class);
+                        startActivity(intent);
                 }
                 return false;
             }

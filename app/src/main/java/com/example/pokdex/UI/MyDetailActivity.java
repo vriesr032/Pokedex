@@ -1,7 +1,12 @@
 package com.example.pokdex.UI;
 
+import android.app.Service;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.DialogInterface;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -24,10 +29,17 @@ import com.example.pokdex.R;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-public class MyDetailActivity extends AppCompatActivity {
+public class MyDetailActivity extends AppCompatActivity implements SensorEventListener {
 
+    final String ID = "#ID ";
     private Executor executor = Executors.newSingleThreadExecutor();
     private MyPokemonViewModel myPokemonViewModel;
+    private SensorManager sensorManager;
+    private Sensor sensor;
+    private MyPokemon pokemon;
+    private ImageView pokeFrontImage;
+    private ImageView pokeBackImage;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -44,7 +56,7 @@ public class MyDetailActivity extends AppCompatActivity {
 
     private void initViews() {
         myPokemonViewModel = ViewModelProviders.of(this).get(MyPokemonViewModel.class);
-        final MyPokemon pokemon = (MyPokemon) getIntent().getSerializableExtra("pokemon");
+        pokemon = (MyPokemon) getIntent().getSerializableExtra("pokemon");
         TextView name = findViewById(R.id.myPokeName);
         TextView id = findViewById(R.id.myId);
         TextView weight = findViewById(R.id.myWeight);
@@ -55,17 +67,19 @@ public class MyDetailActivity extends AppCompatActivity {
         TextView speed = findViewById(R.id.mySpeed);
         TextView specialAttack = findViewById(R.id.mySpecialAttack);
         TextView specialDefence = findViewById(R.id.mySpecialDefence);
-        ImageView pokeFrontImage = findViewById(R.id.myPokeFrontImage);
-        ImageView pokeBackImage = findViewById(R.id.myPokeBackImage);
+        pokeFrontImage = findViewById(R.id.myPokeFrontImage);
+        pokeBackImage = findViewById(R.id.myPokeBackImage);
         TextView type = findViewById(R.id.myTypeTv);
         TextView type1 = findViewById(R.id.myType1);
         TextView type2 = findViewById(R.id.myType2);
         TextView description = findViewById(R.id.myDescription);
         TextView color = findViewById(R.id.myColor);
         FloatingActionButton addPokemon = findViewById(R.id.deletePokemon);
+        sensorManager = (SensorManager) getSystemService(Service.SENSOR_SERVICE);
+        sensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
 
         name.setText(pokemon.getName());
-        id.setText(String.valueOf(pokemon.getId()));
+        id.setText(ID + String.valueOf(pokemon.getId()));
         weight.setText(String.valueOf(pokemon.getWeight()));
         height.setText(String.valueOf(pokemon.getHeight()));
         hp.setText(String.valueOf(pokemon.getHp()));
@@ -119,6 +133,7 @@ public class MyDetailActivity extends AppCompatActivity {
                 }).create().show();
             }
         });
+
     }
 
     private void deletePokemon(final MyPokemon pokemon){
@@ -147,5 +162,40 @@ public class MyDetailActivity extends AppCompatActivity {
             finish();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        sensorManager.unregisterListener(this);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.values[0] > 20000){
+            Glide.with(getApplicationContext())
+                    .load("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/" + pokemon.getId() + ".png")
+                    .centerCrop()
+                    .transition(new DrawableTransitionOptions().crossFade())
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .into(pokeFrontImage);
+            Glide.with(getApplicationContext())
+                    .load("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/shiny/" + pokemon.getId() + ".png")
+                    .centerCrop()
+                    .transition(new DrawableTransitionOptions().crossFade())
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .into(pokeBackImage);
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
     }
 }

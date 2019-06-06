@@ -1,8 +1,13 @@
 package com.example.pokdex.UI;
 
+import android.app.Service;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.DialogInterface;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -27,7 +32,7 @@ import com.example.pokdex.R;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-public class DetailActivity extends AppCompatActivity {
+public class DetailActivity extends AppCompatActivity implements SensorEventListener {
 
     private DetailActivityViewModel viewModel;
     private TextView name;
@@ -53,6 +58,8 @@ public class DetailActivity extends AppCompatActivity {
     private PokemonSpecies pokemonSpecie = new PokemonSpecies();
     private Executor executor = Executors.newSingleThreadExecutor();
     private MyPokemonViewModel myPokemonViewModel;
+    private SensorManager sensorManager;
+    private Sensor sensor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +97,8 @@ public class DetailActivity extends AppCompatActivity {
         color = findViewById(R.id.color);
         addPokemon = findViewById(R.id.addPokemon);
         myPokemonViewModel = ViewModelProviders.of(this).get(MyPokemonViewModel.class);
+        sensorManager = (SensorManager) getSystemService(Service.SENSOR_SERVICE);
+        sensor = sensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
         if (getIntent().hasExtra("name")){
             pokemonName = getIntent().getStringExtra("name");
         }
@@ -232,5 +241,40 @@ public class DetailActivity extends AppCompatActivity {
             finish();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        sensorManager.unregisterListener(this);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.values[0] > 20000){
+            Glide.with(getApplicationContext())
+                    .load("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/" + pokemonDetail.getID() + ".png")
+                    .centerCrop()
+                    .transition(new DrawableTransitionOptions().crossFade())
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .into(pokeFrontImage);
+            Glide.with(getApplicationContext())
+                    .load("https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/shiny/" + pokemonDetail.getID() + ".png")
+                    .centerCrop()
+                    .transition(new DrawableTransitionOptions().crossFade())
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .into(pokeBackImage);
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
     }
 }
